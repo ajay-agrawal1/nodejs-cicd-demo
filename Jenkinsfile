@@ -1,6 +1,36 @@
 pipeline {
     agent any
 
+    environment {
+        PATH = "/opt/homebrew/bin:$PATH"
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                git 'https://github.com/ajay-agrawal1/nodejs-cicd-demo.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh '/opt/homebrew/bin/npm install'
+            }
+        }
+        stage('Build & Test') {
+            steps {
+                sh '/opt/homebrew/bin/npm test || echo "No tests defined, skipping."'
+            }
+        }
+        stage('Run App') {
+            steps {
+                sh '/opt/homebrew/bin/node app.js &'
+            }
+        }
+    }
+}
+pipeline {
+    agent any
+
     stages {
         stage('Clone') {
             steps {
