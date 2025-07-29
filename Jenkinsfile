@@ -1,55 +1,36 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    // Set correct path to npm and node (adjust if needed)
-    PATH = "/opt/homebrew/bin:$PATH"
-  }
-
-  stages {
-    stage('Install Dependencies') {
-      steps {
-        echo 'Installing Node.js dependencies...'
-        sh 'npm install'
-      }
+    environment {
+        IMAGE_NAME = 'nodejs-cicd-demo'
+        CONTAINER_NAME = 'nodejs-app'
+        PORT = '4000'
     }
 
-    stage('Build & Test') {
-      steps {
-        echo 'Running tests (dummy test)...'
-        sh 'npm test'
-      }
-    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
-    stage('Package Artifact') {
-      steps {
-        echo 'Packaging app into zip...'
-        sh 'zip -r app.zip .'
-      }
-    }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
 
-    stage('Archive Artifact') {
-      steps {
-        echo 'Archiving artifact...'
-        archiveArtifacts artifacts: 'app.zip', fingerprint: true
-      }
-    }
+        stage('Stop Previous Container') {
+            steps {
+                sh 'docker rm -f $CONTAINER_NAME || true'
+            }
+        }
 
-    stage('Run App') {
-      steps {
-        echo 'Starting the Node.js app...'
-        sh 'node app.js &'
-      }
+        stage('Run Docker Container') {
+            steps {
+                sh 'docker run -d --name $CONTAINER_NAME -p $PORT:4000 $IMAGE_NAME'
+            }
+        }
     }
-  }
-
-  post {
-    success {
-      echo 'Pipeline completed successfully.'
-    }
-    failure {
-      echo 'Pipeline failed.'
-    }
-  }
 }
 
