@@ -1,17 +1,7 @@
 pipeline {
     agent any
 
-    environment {
-        PATH = "/opt/homebrew/bin:$PATH"
-    }
-
     stages {
-        stage('Clone') {
-            steps {
-                git 'https://github.com/ajay-agrawal1/nodejs-cicd-demo.git'
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
                 sh 'npm install'
@@ -20,13 +10,27 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh 'npm test || echo "No tests defined"'
+                sh 'npm test'
+            }
+        }
+
+        stage('Package Artifact') {
+            steps {
+                sh '''
+                    tar --exclude='./node_modules' -czf nodejs-app.tar.gz .
+                '''
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'nodejs-app.tar.gz', fingerprint: true
             }
         }
 
         stage('Run App') {
             steps {
-                sh 'node app.js &'
+                sh 'nohup node app.js &'
             }
         }
     }
