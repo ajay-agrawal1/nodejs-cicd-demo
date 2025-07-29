@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+	DOCKER_CONFIG = "${env.HOME}/.jenkins-docker-config"
         IMAGE_NAME = 'nodejs-cicd-demo'
         CONTAINER_NAME = 'nodejs-app'
         PORT = '4000'
