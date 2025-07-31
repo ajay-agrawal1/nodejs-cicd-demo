@@ -5,7 +5,7 @@ pipeline {
         NODE_PATH = "/opt/homebrew/bin"
         PATH = "${NODE_PATH}:/usr/local/bin:/usr/bin:/bin"
         EC2_HOST = "ubuntu@ec2-13-203-218-208.ap-south-1.compute.amazonaws.com"
-        KEY_PATH = "KEY_PATH = "/var/jenkins_home/keys/ajay-key.pem"  // Adjust path if different
+        KEY_PATH = "/var/jenkins_home/keys/ajay-key.pem"  // Adjust path if different
     }
 
     stages {
