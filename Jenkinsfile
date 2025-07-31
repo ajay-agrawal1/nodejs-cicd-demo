@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "nodejs-cicd-demo"
-        DOCKER_IMAGE = "nodejs-cicd-demo:latest"
-        EC2_HOST = "13.203.218.208"  // Replace with your EC2 IP
-        EC2_USER = "ubuntu"
-        SSH_KEY_ID = "ec2-ssh-key"
+        NODE_PATH = "/opt/homebrew/bin"
+        PATH = "${NODE_PATH}:/usr/local/bin:/usr/bin:/bin"
+        EC2_HOST = "ubuntu@ec2-13-203-218-208"
+        KEY_PATH = "/Users/ajayagrawal/Downloads/.ssh/ajay-key.pem"  // Adjust path if different
     }
 
     stages {
@@ -18,46 +17,40 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh '/opt/homebrew/bin/npm install'
             }
         }
 
         stage('Build & Test') {
             steps {
-                sh 'npm test'
+                sh '/opt/homebrew/bin/npm test'
             }
         }
 
         stage('Package Artifact') {
             steps {
-                sh 'tar -czf ${APP_NAME}.tar.gz *'
+                sh 'tar -czf nodejs-cicd-demo.tar.gz *'
             }
         }
 
         stage('Archive Artifact') {
             steps {
-                archiveArtifacts artifacts: '*.tar.gz', followSymlinks: false
+                archiveArtifacts artifacts: 'nodejs-cicd-demo.tar.gz', followSymlinks: false
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE} .'
+                sh '/usr/local/bin/docker build -t nodejs-cicd-demo .'
             }
         }
 
         stage('Deploy to EC2') {
             steps {
-                sshagent (credentials: [SSH_KEY_ID]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} 'docker stop ${APP_NAME} || true && docker rm ${APP_NAME} || true'
-                        scp -o StrictHostKeyChecking=no ${APP_NAME}.tar.gz ${EC2_USER}@${EC2_HOST}:/home/ubuntu/
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
-                            docker load < /home/ubuntu/${APP_NAME}.tar.gz || true
-                            docker run -d --name ${APP_NAME} -p 4000:4000 ${DOCKER_IMAGE}
-                        '
-                    """
-                }
+                sh '''
+                    scp -i $KEY_PATH nodejs-cicd-demo.tar.gz $EC2_HOST:/home/ubuntu/
+                    ssh -i $KEY_PATH $EC2_HOST "tar -xzf nodejs-cicd-demo.tar.gz && nohup /opt/homebrew/bin/node app.js > app.log 2>&1 &"
+                '''
             }
         }
     }
